@@ -1,5 +1,4 @@
 #include "utils.h"
-#include <raylib/raylib.h>
 
 float Util_LerpFloat(float a, float b, float w) { return a + w * (b - a); }
 Vector2 Util_LerpVec2(Vector2 a, Vector2 b, float w) {
