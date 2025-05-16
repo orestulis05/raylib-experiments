@@ -211,10 +211,10 @@ int main() {
     ball.Draw();
 
     // Score UI
-    std::string scoreText = TextFormat("%d - %d", scorePlayer, scoreOpponent);
+    const char *scoreText = TextFormat("%d - %d", scorePlayer, scoreOpponent);
     Vector2 scoreTextMeasurements =
-        MeasureTextEx(GetFontDefault(), scoreText.c_str(), 100.0f, 12.0f);
-    DrawTextPro(GetFontDefault(), scoreText.c_str(),
+        MeasureTextEx(GetFontDefault(), scoreText, 100.0f, 12.0f);
+    DrawTextPro(GetFontDefault(), scoreText,
                 {GetScreenWidth() / 2.f - scoreTextMeasurements.x / 2.f, 0},
                 {0, 0}, 0.0f, 100.0f, 12.0f, BLACK);
 
