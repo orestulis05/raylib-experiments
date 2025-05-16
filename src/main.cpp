@@ -1,70 +1,150 @@
 #include "utils.h"
 #include <raylib/raylib.h>
-#include <vector>
 
-typedef struct Sprite {
-  Texture2D texture;
+const int distFromSides = 100;
+
+class PhysicsRect {
+public:
   Rectangle rect;
-  Vector2 velocity;
-} Sprite;
 
-void CheckCollisionsY(Sprite *sprite, std::vector<Sprite> &tiles) {
-  for (const auto &tile : tiles) {
-    if (CheckCollisionRecs(sprite->rect, tile.rect)) {
-      if (sprite->rect.y > tile.rect.y) { // Colliding top
-        sprite->rect.y = tile.rect.y + tile.rect.height;
-        sprite->velocity.y = 0;
-      } else { // Colliding bottom
-        sprite->rect.y = tile.rect.y - sprite->rect.height;
+private:
+  Vector2 _velocity;
+  bool _colliding_up = false;
+  bool _colliding_down = false;
+  bool _colliding_left = false;
+  bool _colliding_right = false;
+
+private:
+  void _HandleCollisionX(PhysicsRect with) {
+    if (CheckCollisionRecs(rect, with.rect)) {
+      if (rect.x < with.rect.x) {
+        // Colliding Right
+        _colliding_right = true;
+      } else {
+        // Colliding Left
+        _colliding_left = true;
       }
     }
   }
-}
-
-void CheckCollisionsX(Sprite *sprite, std::vector<Sprite> &tiles) {
-  for (const auto &tile : tiles) {
-    if (CheckCollisionRecs(sprite->rect, tile.rect)) {
-      if (sprite->rect.x > tile.rect.x) { // Colliding left
-        sprite->rect.x = tile.rect.x + tile.rect.width;
-      } else { // Colliding right
-        sprite->rect.x = tile.rect.x - sprite->rect.width;
+  void _HandleCollisionY(PhysicsRect with) {
+    if (CheckCollisionRecs(rect, with.rect)) {
+      if (rect.y < with.rect.y) {
+        // Colliding Up
+        _colliding_up = true;
+      } else {
+        // Colliding Down
+        _colliding_down = true;
       }
     }
   }
-}
+  void _SetVelocityX(float force) { _velocity.x = force; }
+  void _SetVelocityY(float force) { _velocity.y = force; }
+  void _Draw() { DrawRectanglePro(rect, {0, 0}, 0.0f, BLACK); }
+  void _UpdatePositionX() { rect.x += _velocity.x * GetFrameTime(); }
+  void _UpdatePositionY() { rect.y += _velocity.y * GetFrameTime(); }
+  void _ResetColls() {
+    _colliding_up = false;
+    _colliding_down = false;
+    _colliding_left = false;
+    _colliding_right = false;
+  }
+
+public:
+  bool IsCollidingUp() { return _colliding_up; }
+  bool IsCollidingDown() { return _colliding_down; }
+  bool IsCollidingLeft() { return _colliding_left; }
+  bool IsCollidingRight() { return _colliding_right; }
+
+  void SetVelocityX(float force) { _SetVelocityX(force); }
+  void SetVelocityY(float force) { _SetVelocityY(force); }
+  Vector2 GetVelocity() { return _velocity; }
+  void Draw() { _Draw(); }
+  void MoveAndCollide(PhysicsRect with) {
+    _ResetColls();
+
+    _UpdatePositionX();
+    _HandleCollisionX(with);
+
+    _UpdatePositionY();
+    _HandleCollisionY(with);
+  }
+  void Move() {
+    _UpdatePositionX();
+    _UpdatePositionY();
+  }
+
+  PhysicsRect(Rectangle rect) {
+    this->rect = rect;
+    _ResetColls();
+    _velocity = {0, 0};
+  }
+};
 
 int main() {
   // Initialize application
   InitWindow(1600, 900, "Simple Pong");
   SetTargetFPS(60);
 
-  Texture2D texture_linux_bg = LoadTexture("assets/textures/linux.jpg");
+  PhysicsRect playerPaddle = PhysicsRect((Rectangle){
+      .x = distFromSides,
+      .y = static_cast<float>(GetScreenHeight() / 2.0f - 50),
+      .width = 20,
+      .height = 100,
+  });
+  float playerSpeed = 200.0f;
 
-  Sprite player = (Sprite){.texture = texture_linux_bg,
-                           .rect = (Rectangle){
-                               .x = 10.0,
-                               .y = 10.0,
-                               .width = 64,
-                               .height = 64,
-                           }};
+  PhysicsRect opponentPaddle = PhysicsRect((Rectangle){
+      .x = static_cast<float>(GetScreenWidth() - 20 - distFromSides),
+      .y = static_cast<float>(GetScreenHeight() / 2.0f - 50),
+      .width = 20,
+      .height = 100,
+  });
+  float opponentSpeed = 150.0f;
+
+  PhysicsRect ball = PhysicsRect((Rectangle){
+      .x = 800,
+      .y = 450,
+      .width = 32,
+      .height = 32,
+  });
+  ball.SetVelocityX(200);
 
   // Run
   while (!WindowShouldClose()) {
 
+    // Check for player input
+    playerPaddle.SetVelocityY(0);
+    if (IsKeyDown(KEY_W)) {
+      playerPaddle.SetVelocityY(-playerSpeed);
+    }
+    if (IsKeyDown(KEY_S)) {
+      playerPaddle.SetVelocityY(playerSpeed);
+    }
+
+    // TODO: Enemy follow the ball
+
+    playerPaddle.MoveAndCollide(ball);
+    opponentPaddle.MoveAndCollide(ball);
+    ball.Move();
+
+    // Handle ball knocking back from the paddles
+    if (playerPaddle.IsCollidingRight()) {
+      ball.SetVelocityX(200);
+    }
+    if (opponentPaddle.IsCollidingLeft()) {
+      ball.SetVelocityX(-200);
+    }
+
     BeginDrawing();
+    ClearBackground(WHITE);
 
-    // NOTE: All drawing happens here
-    ClearBackground(SKYBLUE);
-
-    DrawTexturePro(player.texture,
-                   {0, 0, static_cast<float>(player.texture.width),
-                    static_cast<float>(player.texture.height)},
-                   player.rect, {0, 0}, 0.0, BLACK);
+    playerPaddle.Draw();
+    opponentPaddle.Draw();
+    ball.Draw();
 
     EndDrawing();
   }
 
-  UnloadTexture(texture_linux_bg);
   CloseWindow();
   return 0;
 }
