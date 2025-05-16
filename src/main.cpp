@@ -1,6 +1,10 @@
 #include "utils.h"
 #include <raylib/raylib.h>
 
+// TODO:
+// 1. Reset after hitting walls
+// 2. Randomize starting direction
+
 const int distFromSides = 100;
 
 class PhysicsRect {
@@ -80,6 +84,34 @@ public:
   }
 };
 
+void ResetPlayersAndBall(PhysicsRect &player, PhysicsRect &opp,
+                         PhysicsRect &ball) {
+
+  player.rect = {
+      .x = distFromSides,
+      .y = static_cast<float>(GetScreenHeight() / 2.0f - 50),
+      .width = 20,
+      .height = 100,
+  };
+
+  opp.rect = {
+      .x = static_cast<float>(GetScreenWidth() - 20 - distFromSides),
+      .y = static_cast<float>(GetScreenHeight() / 2.0f - 50),
+      .width = 20,
+      .height = 100,
+  };
+
+  ball.rect = {
+      .x = 800,
+      .y = 450,
+      .width = 32,
+      .height = 32,
+  };
+
+  ball.SetVelocityX(200);
+  ball.SetVelocityY(200);
+}
+
 int main() {
   // Initialize application
   InitWindow(1600, 900, "Simple Pong");
@@ -91,15 +123,13 @@ int main() {
       .width = 20,
       .height = 100,
   });
-  float playerSpeed = 200.0f;
-
   PhysicsRect opponentPaddle = PhysicsRect((Rectangle){
       .x = static_cast<float>(GetScreenWidth() - 20 - distFromSides),
       .y = static_cast<float>(GetScreenHeight() / 2.0f - 50),
       .width = 20,
       .height = 100,
   });
-  float opponentSpeed = 150.0f;
+  float movementSpeed = 150.0f;
 
   PhysicsRect ball = PhysicsRect((Rectangle){
       .x = 800,
@@ -107,6 +137,7 @@ int main() {
       .width = 32,
       .height = 32,
   });
+  float ballSpeedX = 200;
   ball.SetVelocityX(200);
   ball.SetVelocityY(200);
 
@@ -116,10 +147,10 @@ int main() {
     // Check for player input
     playerPaddle.SetVelocityY(0);
     if (IsKeyDown(KEY_W)) {
-      playerPaddle.SetVelocityY(-playerSpeed);
+      playerPaddle.SetVelocityY(-movementSpeed);
     }
     if (IsKeyDown(KEY_S)) {
-      playerPaddle.SetVelocityY(playerSpeed);
+      playerPaddle.SetVelocityY(movementSpeed);
     }
 
     // Enemy follow the ball
@@ -127,8 +158,8 @@ int main() {
         ball.rect.y + ball.rect.height / 2 <
         opponentPaddle.rect.y + opponentPaddle.rect.height / 2;
 
-    ballAboveOpponentPaddle ? opponentPaddle.SetVelocityY(-200)
-                            : opponentPaddle.SetVelocityY(200);
+    ballAboveOpponentPaddle ? opponentPaddle.SetVelocityY(-movementSpeed)
+                            : opponentPaddle.SetVelocityY(movementSpeed);
 
     playerPaddle.MoveAndCollide(ball);
     opponentPaddle.MoveAndCollide(ball);
@@ -136,10 +167,12 @@ int main() {
 
     // Ball knocking back from the paddles
     if (playerPaddle.IsCollidingRight()) {
-      ball.SetVelocityX(200);
+      ball.SetVelocityX(ballSpeedX);
+      ballSpeedX += 25;
     }
     if (opponentPaddle.IsCollidingLeft()) {
-      ball.SetVelocityX(-200);
+      ball.SetVelocityX(-ballSpeedX);
+      ballSpeedX += 25;
     }
 
     // Ball knocking back from the floor and ceiling
@@ -147,6 +180,16 @@ int main() {
       ball.SetVelocityY(200);
     } else if (ball.rect.y >= GetScreenHeight() - ball.rect.height) {
       ball.SetVelocityY(-200);
+    }
+
+    // Ball hitting the walls
+    if (ball.rect.x <= 0) {
+      // ball hit the left wall
+      ResetPlayersAndBall(playerPaddle, opponentPaddle, ball);
+    } else if (ball.rect.x >= GetScreenWidth() - ball.rect.width) {
+      // ball hit the right wall
+      ResetPlayersAndBall(playerPaddle, opponentPaddle, ball);
+      ballSpeedX = 200;
     }
 
     BeginDrawing();
