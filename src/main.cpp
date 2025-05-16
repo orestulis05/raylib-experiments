@@ -1,5 +1,7 @@
 #include "utils.h"
+#include <cstdio>
 #include <raylib/raylib.h>
+#include <string>
 
 // TODO:
 // Randomize starting direction
@@ -143,6 +145,10 @@ int main() {
   ball.SetVelocityX(ballStartingSpeed);
   ball.SetVelocityY(ballStartingSpeed);
 
+  // UI
+  Font textFont = GetFontDefault();
+  int scorePlayer(0), scoreOpponent(0);
+
   // Run
   while (!WindowShouldClose()) {
 
@@ -188,10 +194,13 @@ int main() {
     if (ball.rect.x <= 0) {
       // ball hit the left wall
       ResetPlayersAndBall(playerPaddle, opponentPaddle, ball);
+      ballSpeedX = ballStartingSpeed;
+      scoreOpponent++;
     } else if (ball.rect.x >= GetScreenWidth() - ball.rect.width) {
       // ball hit the right wall
       ResetPlayersAndBall(playerPaddle, opponentPaddle, ball);
       ballSpeedX = ballStartingSpeed;
+      scorePlayer++;
     }
 
     BeginDrawing();
@@ -200,6 +209,14 @@ int main() {
     playerPaddle.Draw();
     opponentPaddle.Draw();
     ball.Draw();
+
+    // Score UI
+    std::string scoreText = TextFormat("%d - %d", scorePlayer, scoreOpponent);
+    Vector2 scoreTextMeasurements =
+        MeasureTextEx(GetFontDefault(), scoreText.c_str(), 100.0f, 12.0f);
+    DrawTextPro(GetFontDefault(), scoreText.c_str(),
+                {GetScreenWidth() / 2.f - scoreTextMeasurements.x / 2.f, 0},
+                {0, 0}, 0.0f, 100.0f, 12.0f, BLACK);
 
     EndDrawing();
   }
