@@ -2,10 +2,12 @@
 #include <raylib/raylib.h>
 
 // TODO:
-// 1. Reset after hitting walls
-// 2. Randomize starting direction
+// Randomize starting direction
+// Add score UI
 
 const int distFromSides = 100;
+const float ballStartingSpeed = 200;
+const float ballSpeedHitIncrement = 25;
 
 class PhysicsRect {
 public:
@@ -108,8 +110,8 @@ void ResetPlayersAndBall(PhysicsRect &player, PhysicsRect &opp,
       .height = 32,
   };
 
-  ball.SetVelocityX(200);
-  ball.SetVelocityY(200);
+  ball.SetVelocityX(ballStartingSpeed);
+  ball.SetVelocityY(ballStartingSpeed);
 }
 
 int main() {
@@ -137,9 +139,9 @@ int main() {
       .width = 32,
       .height = 32,
   });
-  float ballSpeedX = 200;
-  ball.SetVelocityX(200);
-  ball.SetVelocityY(200);
+  float ballSpeedX = ballStartingSpeed;
+  ball.SetVelocityX(ballStartingSpeed);
+  ball.SetVelocityY(ballStartingSpeed);
 
   // Run
   while (!WindowShouldClose()) {
@@ -168,18 +170,18 @@ int main() {
     // Ball knocking back from the paddles
     if (playerPaddle.IsCollidingRight()) {
       ball.SetVelocityX(ballSpeedX);
-      ballSpeedX += 25;
+      ballSpeedX += ballSpeedHitIncrement;
     }
     if (opponentPaddle.IsCollidingLeft()) {
       ball.SetVelocityX(-ballSpeedX);
-      ballSpeedX += 25;
+      ballSpeedX += ballSpeedHitIncrement;
     }
 
     // Ball knocking back from the floor and ceiling
     if (ball.rect.y <= 0) {
-      ball.SetVelocityY(200);
+      ball.SetVelocityY(ballStartingSpeed);
     } else if (ball.rect.y >= GetScreenHeight() - ball.rect.height) {
-      ball.SetVelocityY(-200);
+      ball.SetVelocityY(-ballStartingSpeed);
     }
 
     // Ball hitting the walls
@@ -189,7 +191,7 @@ int main() {
     } else if (ball.rect.x >= GetScreenWidth() - ball.rect.width) {
       // ball hit the right wall
       ResetPlayersAndBall(playerPaddle, opponentPaddle, ball);
-      ballSpeedX = 200;
+      ballSpeedX = ballStartingSpeed;
     }
 
     BeginDrawing();
