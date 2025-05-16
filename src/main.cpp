@@ -122,7 +122,13 @@ int main() {
       playerPaddle.SetVelocityY(playerSpeed);
     }
 
-    // TODO: Enemy follow the ball
+    // Enemy follow the ball
+    bool ballAboveOpponentPaddle =
+        ball.rect.y + ball.rect.height / 2 <
+        opponentPaddle.rect.y + opponentPaddle.rect.height / 2;
+
+    ballAboveOpponentPaddle ? opponentPaddle.SetVelocityY(-200)
+                            : opponentPaddle.SetVelocityY(200);
 
     playerPaddle.MoveAndCollide(ball);
     opponentPaddle.MoveAndCollide(ball);
