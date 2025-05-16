@@ -1,11 +1,11 @@
 #include "utils.h"
+#include <algorithm>
 #include <cstdio>
 #include <raylib/raylib.h>
 #include <string>
 
 // TODO:
 // Randomize starting direction
-// Add score UI
 
 const int distFromSides = 100;
 const float ballStartingSpeed = 200;
@@ -133,7 +133,7 @@ int main() {
       .width = 20,
       .height = 100,
   });
-  float movementSpeed = 150.0f;
+  float movementSpeed = 250.0f;
 
   PhysicsRect ball = PhysicsRect((Rectangle){
       .x = 800,
@@ -154,6 +154,8 @@ int main() {
 
     // Check for player input
     playerPaddle.SetVelocityY(0);
+    opponentPaddle.SetVelocityY(0);
+
     if (IsKeyDown(KEY_W)) {
       playerPaddle.SetVelocityY(-movementSpeed);
     }
@@ -163,15 +165,23 @@ int main() {
 
     // Enemy follow the ball
     bool ballAboveOpponentPaddle =
-        ball.rect.y + ball.rect.height / 2 <
-        opponentPaddle.rect.y + opponentPaddle.rect.height / 2;
+        ball.rect.y + ball.rect.height / 2.0f <
+        opponentPaddle.rect.y + opponentPaddle.rect.height / 2.0f;
 
-    ballAboveOpponentPaddle ? opponentPaddle.SetVelocityY(-movementSpeed)
-                            : opponentPaddle.SetVelocityY(movementSpeed);
+    ballAboveOpponentPaddle ? opponentPaddle.SetVelocityY(-ballStartingSpeed)
+                            : opponentPaddle.SetVelocityY(ballStartingSpeed);
 
     playerPaddle.MoveAndCollide(ball);
     opponentPaddle.MoveAndCollide(ball);
     ball.Move();
+
+    // Clamp the paddle positions
+    playerPaddle.rect.y =
+        std::clamp(playerPaddle.rect.y, 0.0f,
+                   GetScreenHeight() - playerPaddle.rect.height);
+    opponentPaddle.rect.y =
+        std::clamp(opponentPaddle.rect.y, 0.0f,
+                   GetScreenHeight() - opponentPaddle.rect.height);
 
     // Ball knocking back from the paddles
     if (playerPaddle.IsCollidingRight()) {
