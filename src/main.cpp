@@ -108,6 +108,7 @@ int main() {
       .height = 32,
   });
   ball.SetVelocityX(200);
+  ball.SetVelocityY(200);
 
   // Run
   while (!WindowShouldClose()) {
@@ -127,12 +128,19 @@ int main() {
     opponentPaddle.MoveAndCollide(ball);
     ball.Move();
 
-    // Handle ball knocking back from the paddles
+    // Ball knocking back from the paddles
     if (playerPaddle.IsCollidingRight()) {
       ball.SetVelocityX(200);
     }
     if (opponentPaddle.IsCollidingLeft()) {
       ball.SetVelocityX(-200);
+    }
+
+    // Ball knocking back from the floor and ceiling
+    if (ball.rect.y <= 0) {
+      ball.SetVelocityY(200);
+    } else if (ball.rect.y >= GetScreenHeight() - ball.rect.height) {
+      ball.SetVelocityY(-200);
     }
 
     BeginDrawing();
