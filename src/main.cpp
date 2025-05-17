@@ -2,7 +2,6 @@
 #include <algorithm>
 #include <cstdio>
 #include <raylib/raylib.h>
-#include <string>
 
 // TODO:
 // Randomize starting direction
@@ -146,8 +145,8 @@ int main() {
   ball.SetVelocityY(ballStartingSpeed);
 
   // UI
-  Font textFont = GetFontDefault();
   int scorePlayer(0), scoreOpponent(0);
+  int knocksCount(0);
 
   // Run
   while (!WindowShouldClose()) {
@@ -187,10 +186,14 @@ int main() {
     if (playerPaddle.IsCollidingRight()) {
       ball.SetVelocityX(ballSpeedX);
       ballSpeedX += ballSpeedHitIncrement;
+      ball.rect.x = playerPaddle.rect.x + playerPaddle.rect.width;
+      knocksCount++;
     }
     if (opponentPaddle.IsCollidingLeft()) {
       ball.SetVelocityX(-ballSpeedX);
       ballSpeedX += ballSpeedHitIncrement;
+      ball.rect.x = opponentPaddle.rect.x - ball.rect.width;
+      knocksCount++;
     }
 
     // Ball knocking back from the floor and ceiling
@@ -206,11 +209,13 @@ int main() {
       ResetPlayersAndBall(playerPaddle, opponentPaddle, ball);
       ballSpeedX = ballStartingSpeed;
       scoreOpponent++;
+      knocksCount = 0;
     } else if (ball.rect.x >= GetScreenWidth() - ball.rect.width) {
       // ball hit the right wall
       ResetPlayersAndBall(playerPaddle, opponentPaddle, ball);
       ballSpeedX = ballStartingSpeed;
       scorePlayer++;
+      knocksCount = 0;
     }
 
     BeginDrawing();
@@ -226,6 +231,15 @@ int main() {
         MeasureTextEx(GetFontDefault(), scoreText, 100.0f, 12.0f);
     DrawTextPro(GetFontDefault(), scoreText,
                 {GetScreenWidth() / 2.f - scoreTextMeasurements.x / 2.f, 0},
+                {0, 0}, 0.0f, 100.0f, 12.0f, BLACK);
+
+    // Bounces UI
+    const char *knocksText = TextFormat("%d knocks", knocksCount);
+    Vector2 knocksTextMeasurements =
+        MeasureTextEx(GetFontDefault(), knocksText, 100.0f, 12.0f);
+    DrawTextPro(GetFontDefault(), knocksText,
+                {GetScreenWidth() / 2.f - knocksTextMeasurements.x / 2.f,
+                 GetScreenHeight() - knocksTextMeasurements.y},
                 {0, 0}, 0.0f, 100.0f, 12.0f, BLACK);
 
     EndDrawing();
